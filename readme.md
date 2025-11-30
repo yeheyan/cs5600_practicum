@@ -206,43 +206,6 @@ We test using localhost connections where both server and client run on the same
 - **Single Machine**: Run the server in one terminal, then launch multiple client programs in separate terminals. All connect to `localhost` (127.0.0.1).
 - **Multi-threaded Testing**: We simulate concurrent requests by executing identical operations from multiple clients simultaneously, allowing us to verify the server's thread-safety and concurrency controls.
 
-
-# NEU Discovery Cloud Shell Nodes
-We realize real network communication using NEU discovery shell nodes so that we will not have to deal with the firewall.
-
-### Step by step tutorial
-Open two terminals, we will create two different nodes, one for server and one for client.
-In one terminal:
-```
-srun --partition=short --nodes=1 --ntasks=1 --time=01:00:00 --pty /bin/bash
-```
-Then go to the server directory of the program;
-```
-cd project_server
-```
-The discovery cloud vm has a shared file system so we need a server and client directories for separation.
-
-Then find the server IP:
-```
-hostname -I
-```
-Start server:
-```
-./server
-```
-
-In the other terminal:
-```
-srun --partition=short --nodes=1 --exclude=node#ofthefirstterminal --pty /bin/bash
-```
-In this one, we go to the client directory:
-```
-cd project_client
-```
-Edit `config.h`, SERVER_IP to the hostname we found in server node side.
-
-Run client operation normally.
-
 # NEU Discovery: Real Network Communication Testing
 
 We use NEU Discovery compute nodes to test real network communication between physically separate machines, avoiding local firewall complications. Discovery nodes can communicate directly within the cluster's internal network.
