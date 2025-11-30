@@ -200,17 +200,17 @@ Server IP and port can be configured in `config.h`.
 
 ## Testing Strategies
 
-**Local Testing (Primary Method)**
+## Local Testing
 We test using localhost connections where both server and client run on the same machine or local network. This avoids firewall complications that would prevent direct connections between machines on different networks.
 
 - **Single Machine**: Run the server in one terminal, then launch multiple client programs in separate terminals. All connect to `localhost` (127.0.0.1).
 - **Multi-threaded Testing**: We simulate concurrent requests by executing identical operations from multiple clients simultaneously, allowing us to verify the server's thread-safety and concurrency controls.
 
-# NEU Discovery: Real Network Communication Testing
+## NEU Discovery: Real Network Communication Testing
 
 We use NEU Discovery compute nodes to test real network communication between physically separate machines, avoiding local firewall complications. Discovery nodes can communicate directly within the cluster's internal network.
 
-## Prerequisites
+### Prerequisites
 
 Upload your project to Discovery:
 ```ruby
@@ -224,7 +224,7 @@ SSH to Discovery:
 ```ruby
 ssh username@login.discovery.neu.edu
 ```
-## Setup: Create Separate Server and Client Directories
+### Setup: Create Separate Server and Client Directories
 
 Discovery uses a shared filesystem (NFS) across all compute nodes, meaning the same files are visible everywhere. To maintain separate configurations for server and client, create two copies:
 ```
@@ -233,9 +233,9 @@ cp -r cs5600_practicum cs5600_server
 ```
 cp -r cs5600_practicum cs5600_client
 ```
-## Step-by-Step Testing Guide
+### Step-by-Step Testing Guide
 
-### Terminal 1: Start the Server
+#### Terminal 1: Start the Server
 
 1. Request a compute node:
 ```ruby
@@ -269,7 +269,7 @@ make clean && make
 
 The server should display: Server listening on 0.0.0.0:8080
 
-### Terminal 2: Run the Client
+#### Terminal 2: Run the Client
 
 1. Request a different compute node (excluding the server node):
 
@@ -309,13 +309,13 @@ Test operations
 ```
 ./rfs GET remote_file.txt downloaded.txt
 ```
-## Verification
+### Verification
 
 To confirm real network communication is working:
 
 Test connectivity from client node:
 
-### Troubleshoot Network Connection:
+#### Troubleshoot Network Connection:
 
 Ping the server node
 ```
@@ -328,7 +328,7 @@ nc -zv hostname 8080
 
 Both should succeed if the server is running and network communication is working.
 
-## Why This Setup Works
+### Why This Setup Works
 
 - Real Network Communication: Client and server run on different physical machines, communicating via TCP over Discovery's internal network
 - No Firewall Issues: Discovery nodes can communicate freely within the cluster
