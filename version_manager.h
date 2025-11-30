@@ -16,4 +16,6 @@ time_t extract_version_timestamp(const char *version_filename);
 // Hash function for mutex selection
 unsigned int hash_string(const char *str);
 
+int resolve_version_path(const char *full_path, int version_number, char *version_path, size_t size);
+
 #endif

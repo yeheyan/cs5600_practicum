@@ -42,6 +42,16 @@ int main(int argc, char *argv[])
     get_file(argv[2], argc >= 4 ? argv[3] : NULL);
     break;
 
+  case OP_GETVERSION:
+    if (argc < 4)
+    {
+      fprintf(stderr, "Usage: %s GETVERSION <remote_file> <version_number> [local_file]\n", argv[0]);
+      fprintf(stderr, "Example: %s GETVERSION file.txt 2 old_file.txt\n", argv[0]);
+      return 1;
+    }
+    get_version(argv[2], atoi(argv[3]), argc >= 5 ? argv[4] : NULL);
+    break;
+
   case OP_RM:
     if (argc != 3)
     {

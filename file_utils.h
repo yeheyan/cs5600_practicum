@@ -14,4 +14,6 @@ int delete_file_versions(const char *full_path, int *deleted, int *failed);
 time_t get_file_mtime(const char *filename);
 void format_timestamp(time_t timestamp, char *buffer, size_t size);
 
+long send_file_with_lock(int client_sock, const char *filepath);
+
 #endif

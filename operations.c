@@ -16,6 +16,8 @@ Operation parse_operation(const char *op_str)
         return OP_WRITE;
     if (strcmp(op_str, "GET") == 0)
         return OP_GET;
+    if (strcmp(op_str, "GETVERSION") == 0)
+        return OP_GETVERSION;
     if (strcmp(op_str, "RM") == 0)
         return OP_RM;
     if (strcmp(op_str, "LS") == 0)
@@ -33,6 +35,8 @@ const char *operation_to_string(Operation op)
         return "WRITE";
     case OP_GET:
         return "GET";
+    case OP_GETVERSION:
+        return "GETVERSION";
     case OP_RM:
         return "RM";
     case OP_LS:
@@ -145,6 +149,58 @@ void get_file(char *remote_file, char *local_file)
     if (bytes_received >= 0)
     {
         printf("Received %ld bytes, saved to '%s'\n", bytes_received, local_path);
+    }
+
+    close(sock);
+}
+
+void get_version(char *remote_file, int version_number, char *local_file)
+{
+    char local_path[256];
+    char request[512];
+
+    // Build request: "filename:version_number"
+    snprintf(request, sizeof(request), "%s:%d", remote_file, version_number);
+
+    // Determine local filename
+    if (local_file == NULL)
+    {
+        char *temp = strdup(remote_file);
+        char *filename = basename(temp);
+        snprintf(local_path, sizeof(local_path), "%s.v%d", filename, version_number);
+        free(temp);
+        local_file = local_path;
+    }
+
+    printf("Requesting version %d of '%s' from %s:%d, saving to '%s'\n",
+           version_number, remote_file, SERVER_IP, SERVER_PORT, local_file);
+
+    int sock = connect_to_server(SERVER_IP, SERVER_PORT);
+    if (sock < 0)
+        return;
+
+    if (send_operation(sock, "GETVERSION") < 0)
+    {
+        close(sock);
+        return;
+    }
+
+    // Send request (filename:version)
+    if (send_string(sock, request) < 0)
+    {
+        close(sock);
+        return;
+    }
+
+    long bytes_received = receive_file(sock, local_file);
+    if (bytes_received >= 0)
+    {
+        printf("✓ Received version %d: %ld bytes, saved to '%s'\n",
+               version_number, bytes_received, local_file);
+    }
+    else
+    {
+        fprintf(stderr, "✗ Version %d not found or failed to retrieve\n", version_number);
     }
 
     close(sock);

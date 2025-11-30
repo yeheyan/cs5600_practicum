@@ -3,7 +3,10 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <time.h>
+#include <sys/file.h>
+#include <sys/socket.h>
 #include "file_utils.h"
+#include "config.h"
 
 // Check if file exists
 int file_exists(const char *filename)
@@ -98,4 +101,56 @@ void format_timestamp(time_t timestamp, char *buffer, size_t size)
 {
     struct tm *tm_info = localtime(&timestamp);
     strftime(buffer, size, "%Y-%m-%d %H:%M:%S", tm_info);
+}
+
+// Send a file over socket with locking
+long send_file_with_lock(int client_sock, const char *filepath)
+{
+    char buffer[BUFFER_SIZE];
+
+    // Open file for reading
+    FILE *file = fopen(filepath, "rb");
+    if (!file)
+    {
+        perror("Failed to open file");
+        long error = -1;
+        send(client_sock, &error, sizeof(long), 0);
+        return -1;
+    }
+
+    // Lock file for reading (shared lock)
+    int fd = fileno(file);
+    if (flock(fd, LOCK_SH) != 0)
+    {
+        perror("Failed to lock file");
+        fclose(file);
+        long error = -1;
+        send(client_sock, &error, sizeof(long), 0);
+        return -1;
+    }
+    printf("[LOCKED] %s for reading\n", filepath);
+
+    // Get file size
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // Send file size
+    send(client_sock, &file_size, sizeof(long), 0);
+
+    // Send file data
+    size_t bytes_read;
+    long total_sent = 0;
+    while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) > 0)
+    {
+        send(client_sock, buffer, bytes_read, 0);
+        total_sent += bytes_read;
+    }
+
+    // Unlock and close
+    flock(fd, LOCK_UN);
+    printf("[UNLOCKED] %s\n", filepath);
+    fclose(file);
+
+    return total_sent;
 }

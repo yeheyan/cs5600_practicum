@@ -4,6 +4,7 @@
         "stat.h": "c",
         "operations.h": "c",
         "errno.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "file_utils.h": "c"
     }
 }

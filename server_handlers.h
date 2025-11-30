@@ -4,6 +4,7 @@
 // Handler functions - ONLY these
 void handle_write_request(int client_sock);
 void handle_get_request(int client_sock);
+void handle_getversion_request(int client_sock);
 void handle_rm_request(int client_sock);
 void handle_ls_request(int client_sock);
 void handle_stop_request(void);

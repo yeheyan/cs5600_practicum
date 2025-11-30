@@ -6,6 +6,7 @@ typedef enum
 {
     OP_WRITE,
     OP_GET,
+    OP_GETVERSION,
     OP_RM,
     OP_LS,
     OP_STOP,
@@ -33,6 +34,15 @@ void write_file(char *local_file, char *remote_file);
  * @param local_file Path where the file will be saved locally, or NULL to use current directory with same basename
  */
 void get_file(char *remote_file, char *local_file);
+
+/**
+ * @brief Get a specific version of a remote file from the server and save it locally
+ *
+ * @param remote_file Path to the remote file to be read
+ * @param version_number Version number to retrieve
+ * @param local_file Path where the versioned file will be saved locally, or NULL to use current directory with modified basename
+ */
+void get_version(char *remote_file, int version_number, char *local_file);
 
 /**
  * @brief Delete a remote file from the server

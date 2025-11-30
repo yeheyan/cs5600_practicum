@@ -92,6 +92,10 @@ void *handle_client(void *arg)
     handle_get_request(client_sock);
     break;
 
+  case OP_GETVERSION:
+    handle_getversion_request(client_sock);
+    break;
+
   case OP_RM:
     handle_rm_request(client_sock);
     break;

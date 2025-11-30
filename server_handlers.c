@@ -183,15 +183,15 @@ void handle_write_request(int client_sock)
     pthread_mutex_unlock(&version_mutexes[hash]);
     printf("[WRITE MUTEX UNLOCKED] for %s\n", full_path);
 
-    printf("✓ File saved successfully: %ld bytes to %s\n", total_received, full_path);
+    printf("File saved successfully: %ld bytes to %s\n", total_received, full_path);
 }
 
 // GET handler
+// Regular GET - just get current file
 void handle_get_request(int client_sock)
 {
     char filename[256];
     int filename_len;
-    char buffer[BUFFER_SIZE];
 
     // Receive filename
     if (recv(client_sock, &filename_len, sizeof(int), 0) <= 0 ||
@@ -202,7 +202,7 @@ void handle_get_request(int client_sock)
     }
     filename[filename_len] = '\0';
 
-    printf("Client requesting file: %s\n", filename);
+    printf("GET request for: %s\n", filename);
 
     // Validate path
     if (validate_path(filename) != 0)
@@ -217,50 +217,84 @@ void handle_get_request(int client_sock)
     build_storage_path(filename, full_path, sizeof(full_path));
     printf("Reading from: %s\n", full_path);
 
-    // Open file for reading
-    FILE *file = fopen(full_path, "rb");
-    if (!file)
+    // Use shared function to send file
+    long bytes_sent = send_file_with_lock(client_sock, full_path);
+
+    if (bytes_sent > 0)
     {
+        printf("Sent file: %ld bytes\n", bytes_sent);
+    }
+    else
+    {
+        printf("Failed to send file\n");
+    }
+}
+
+// GETVERSION - get specific version
+void handle_getversion_request(int client_sock)
+{
+    char request[512];
+    int request_len;
+
+    // Receive request (format: "filename:version_number")
+    if (recv(client_sock, &request_len, sizeof(int), 0) <= 0 ||
+        recv(client_sock, request, request_len, 0) <= 0)
+    {
+        perror("Failed to receive version request");
+        return;
+    }
+    request[request_len] = '\0';
+
+    // Parse request
+    char *colon = strchr(request, ':');
+    if (!colon)
+    {
+        fprintf(stderr, "Invalid GETVERSION format\n");
         long error = -1;
         send(client_sock, &error, sizeof(long), 0);
-        printf("File not found: %s\n", full_path);
         return;
     }
 
-    // Lock the file for reading (shared lock)
-    int fd = fileno(file);
-    if (flock(fd, LOCK_SH) != 0)
+    *colon = '\0';
+    char *filename = request;
+    int version_number = atoi(colon + 1);
+
+    printf("GETVERSION request: %s, version %d\n", filename, version_number);
+
+    // Validate path
+    if (validate_path(filename) != 0)
     {
-        perror("Failed to lock file");
-        fclose(file);
         long error = -1;
         send(client_sock, &error, sizeof(long), 0);
         return;
     }
-    printf("[LOCKED] %s for reading\n", full_path);
 
-    // Get file size
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    // Build full path and resolve version
+    char full_path[512];
+    build_storage_path(filename, full_path, sizeof(full_path));
 
-    // Send file size
-    send(client_sock, &file_size, sizeof(long), 0);
-
-    // Send file data
-    size_t bytes_read;
-    long total_sent = 0;
-    while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) > 0)
+    char version_path[512];
+    if (resolve_version_path(full_path, version_number, version_path, sizeof(version_path)) != 0)
     {
-        send(client_sock, buffer, bytes_read, 0);
-        total_sent += bytes_read;
+        fprintf(stderr, "Version %d not found\n", version_number);
+        long error = -1;
+        send(client_sock, &error, sizeof(long), 0);
+        return;
     }
 
-    // Unlock and close
-    flock(fd, LOCK_UN);
-    printf("[UNLOCKED] %s\n", full_path);
-    fclose(file);
-    printf("Sent file: %ld bytes\n", total_sent);
+    printf("Resolved to: %s\n", version_path);
+
+    // Use shared function to send file (REUSED!)
+    long bytes_sent = send_file_with_lock(client_sock, version_path);
+
+    if (bytes_sent > 0)
+    {
+        printf("Sent version %d: %ld bytes\n", version_number, bytes_sent);
+    }
+    else
+    {
+        printf("Failed to send version\n");
+    }
 }
 
 // RM handler - simplified version
