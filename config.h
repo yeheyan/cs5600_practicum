@@ -3,7 +3,7 @@
 
 // Change these values as needed
 #define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 2000
+#define SERVER_PORT 8080
 
 // Root directory for storing files on the server
 #define STORAGE_ROOT "./rfs_storage"
