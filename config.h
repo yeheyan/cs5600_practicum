@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Change these values as needed
+// Server network configuration
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8080
 

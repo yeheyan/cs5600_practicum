@@ -1,3 +1,9 @@
+/*
+ * server_handlers.c, Yehen Yan, CS5600 Practicum II
+ * Server request handlers implementation
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +23,7 @@
 // Server state
 static volatile int server_running = 1;
 static pthread_mutex_t server_mutex = PTHREAD_MUTEX_INITIALIZER;
-// Server control functions
+
 void set_server_running(int value)
 {
     pthread_mutex_lock(&server_mutex);
@@ -34,7 +40,6 @@ int is_server_running(void)
     return running;
 }
 
-// WRITE handler
 void handle_write_request(int client_sock)
 {
     char filename[256];
@@ -87,7 +92,7 @@ void handle_write_request(int client_sock)
         }
     }
 
-    // LOCK FOR ENTIRE WRITE OPERATION (backup + write)
+    // lock for entire write operation(backup + write)
     unsigned int hash = hash_string(full_path);
     pthread_mutex_lock(&version_mutexes[hash]);
     printf("[WRITE MUTEX LOCKED] for %s\n", full_path);
@@ -186,8 +191,6 @@ void handle_write_request(int client_sock)
     printf("File saved successfully: %ld bytes to %s\n", total_received, full_path);
 }
 
-// GET handler
-// Regular GET - just get current file
 void handle_get_request(int client_sock)
 {
     char filename[256];
@@ -230,7 +233,6 @@ void handle_get_request(int client_sock)
     }
 }
 
-// GETVERSION - get specific version
 void handle_getversion_request(int client_sock)
 {
     char request[512];
@@ -284,7 +286,6 @@ void handle_getversion_request(int client_sock)
 
     printf("Resolved to: %s\n", version_path);
 
-    // Use shared function to send file (REUSED!)
     long bytes_sent = send_file_with_lock(client_sock, version_path);
 
     if (bytes_sent > 0)
@@ -297,7 +298,6 @@ void handle_getversion_request(int client_sock)
     }
 }
 
-// RM handler - simplified version
 void handle_rm_request(int client_sock)
 {
     char filename[256];

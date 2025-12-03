@@ -1,7 +1,11 @@
+/*
+ * network.h, Yehen Yan, CS5600 Practicum II
+ * Network communication function declarations for remote file system
+ * Last modified: Dec 2025
+ */
+
 #ifndef NETWORK_H
 #define NETWORK_H
-
-#define PORT 2000
 
 /**
  * @brief Create and connect socket to server

@@ -5,6 +5,8 @@
         "operations.h": "c",
         "errno.h": "c",
         "config.h": "c",
-        "file_utils.h": "c"
+        "file_utils.h": "c",
+        "socket.h": "c",
+        "libgen.h": "c"
     }
 }

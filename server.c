@@ -1,3 +1,9 @@
+/*
+ * server.c, Yehen Yan, CS5600 Practicum II
+ * Main server implementation
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +20,7 @@
 #include "config.h"
 
 static int global_socket_desc = -1;
+
 // Structure to pass to thread
 typedef struct
 {
@@ -199,7 +206,6 @@ int main(void)
     perror("Failed to set socket timeout");
   }
   // Main server loop
-  // Main server loop with select()
   while (is_server_running())
   {
     // Use select to wait for connection with timeout
@@ -207,7 +213,6 @@ int main(void)
 
     FD_ZERO(&read_fds);
     FD_SET(socket_desc, &read_fds);
-
 
     // Wait for socket to be readable (incoming connection) or timeout
     int activity = select(socket_desc + 1, &read_fds, NULL, NULL, &timeout);

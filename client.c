@@ -1,3 +1,8 @@
+/*
+ * Client program for remote file system, Yehen Yan, CS5600 Practicum II
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +17,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Operations:\n");
     fprintf(stderr, "  WRITE <local_file> [remote_file]\n");
     fprintf(stderr, "  GET <remote_file> [local_file]\n");
+    fprintf(stderr, "  GETVERSION <remote_file> <version_number> [local_file]\n");
     fprintf(stderr, "  RM <remote_file>\n");
     fprintf(stderr, "  LS <path>\n");
     fprintf(stderr, "  STOP\n");

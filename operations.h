@@ -1,3 +1,9 @@
+/*
+ * operations.h, Yehen Yan, CS5600 Practicum II
+ * Remote file system operation declarations
+ * Last modified: Dec 2025
+ */
+
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
 
@@ -13,10 +19,20 @@ typedef enum
     OP_UNKNOWN
 } Operation;
 
-// Function to convert string to operation enum
+/**
+ * @brief Convert string to operation enum
+ *
+ * @param op_str
+ * @return Operation
+ */
 Operation parse_operation(const char *op_str);
 
-// Function to convert operation enum to string
+/**
+ * @brief Convert operation enum to string
+ *
+ * @param op
+ * @return const char*
+ */
 const char *operation_to_string(Operation op);
 
 /**
@@ -63,4 +79,4 @@ void list_directory(char *remote_file);
  */
 void stop_server();
 
-#endif
+#endif // OPERATIONS_H

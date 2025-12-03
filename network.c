@@ -1,3 +1,9 @@
+/*
+ * network.c, Yehen Yan, CS5600 Practicum II
+ * Network communication functions for remote file system
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,10 +12,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "network.h"
+#include "config.h"
 
-#define BUFFER_SIZE 4096
-
-// Create and connect socket to server
 int connect_to_server(const char *server_ip, int port)
 {
     int sock;
@@ -36,7 +40,6 @@ int connect_to_server(const char *server_ip, int port)
     return sock;
 }
 
-// Send operation type
 int send_operation(int sock, const char *operation)
 {
     int op_len = strlen(operation);
@@ -80,7 +83,6 @@ int send_string(int sock, const char *str)
     return 0;
 }
 
-// Send file contents
 long send_file(int sock, const char *filename)
 {
     FILE *file = fopen(filename, "rb");
@@ -123,7 +125,6 @@ long send_file(int sock, const char *filename)
     return total_sent;
 }
 
-// Receive file contents
 long receive_file(int sock, const char *filename)
 {
     // Receive file size
@@ -167,7 +168,6 @@ long receive_file(int sock, const char *filename)
     return total_received;
 }
 
-// Receive a response message
 int receive_response(int sock, char *buffer, size_t buffer_size)
 {
     int bytes = recv(sock, buffer, buffer_size - 1, 0);

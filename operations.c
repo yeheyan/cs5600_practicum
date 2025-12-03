@@ -1,3 +1,9 @@
+/*
+ * operations.c, Yehen Yan, CS5600 Practicum II
+ * Remote file system operation implementations
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

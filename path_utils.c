@@ -1,3 +1,9 @@
+/*
+ * path_utils.c, Yehen Yan, CS5600 Practicum II
+ * Path validation and directory management functions
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -6,10 +12,8 @@
 #include "path_utils.h"
 #include "config.h"
 
-// Mutex for directory operations
 static pthread_mutex_t dir_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Validate path for security
 int validate_path(const char *path)
 {
     // Reject absolute paths
@@ -42,13 +46,11 @@ int validate_path(const char *path)
     return 0;
 }
 
-// Build full storage path
 void build_storage_path(const char *relative_path, char *full_path, size_t size)
 {
     snprintf(full_path, size, "%s/%s", STORAGE_ROOT, relative_path);
 }
 
-// Create directory recursively
 int create_directories(const char *path)
 {
     char tmp[512];
@@ -84,7 +86,6 @@ int create_directories(const char *path)
     return 0;
 }
 
-// Thread-safe directory creation
 int create_directories_safe(const char *path)
 {
     pthread_mutex_lock(&dir_mutex);

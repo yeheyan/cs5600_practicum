@@ -1,3 +1,9 @@
+/*
+ * version_manager.c, Yehen Yan, CS5600 Practicum II
+ * File version management implementation
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +18,6 @@
 pthread_mutex_t version_mutexes[HASH_SIZE] = {
     [0 ... HASH_SIZE - 1] = PTHREAD_MUTEX_INITIALIZER};
 
-// Hash function
 unsigned int hash_string(const char *str)
 {
     unsigned int hash = 0;
@@ -23,7 +28,6 @@ unsigned int hash_string(const char *str)
     return hash % HASH_SIZE;
 }
 
-// Backup file by renaming with version timestamp
 void backup_file(const char *filename)
 {
     if (!file_exists(filename))
@@ -51,7 +55,6 @@ void backup_file(const char *filename)
     }
 }
 
-// Thread-safe backup
 void backup_file_safe(const char *filename)
 {
     unsigned int hash = hash_string(filename);
@@ -61,7 +64,6 @@ void backup_file_safe(const char *filename)
     pthread_mutex_unlock(&version_mutexes[hash]);
 }
 
-// Extract timestamp from version filename
 time_t extract_version_timestamp(const char *version_filename)
 {
     const char *v_pos = strrchr(version_filename, 'v');
@@ -72,7 +74,6 @@ time_t extract_version_timestamp(const char *version_filename)
     return 0;
 }
 
-// Find the Nth version of a file (1 = oldest, higher = newer)
 int resolve_version_path(const char *full_path, int version_number, char *version_path, size_t size)
 {
     char pattern[512];
