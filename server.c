@@ -3,7 +3,6 @@
  * Main server implementation
  * Last modified: Dec 2025
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +16,7 @@
 #include <signal.h>
 #include "operations.h"
 #include "server_handlers.h"
+#include "network.h"
 #include "config.h"
 
 static int global_socket_desc = -1;
@@ -133,7 +133,7 @@ int main(void)
 {
   int socket_desc;
   socklen_t client_size;
-  struct sockaddr_in server_addr, client_addr;
+  struct sockaddr_in client_addr;
 
   // Register signal handlers
   struct sigaction sa;
@@ -154,15 +154,6 @@ int main(void)
 
   printf("Signal handlers registered (Ctrl+C for graceful shutdown)\n");
 
-  // Create socket
-  socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-  if (socket_desc < 0)
-  {
-    printf("Error while creating socket\n");
-    return -1;
-  }
-  printf("Socket created successfully\n");
-
   // Create storage root directory
   if (mkdir(STORAGE_ROOT, 0755) != 0 && errno != EEXIST)
   {
@@ -171,31 +162,17 @@ int main(void)
   }
   printf("Storage root: %s\n", STORAGE_ROOT);
 
-  // Allow port reuse
-  int opt = 1;
-  setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-  // Set port and IP
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons(SERVER_PORT);
-  server_addr.sin_addr.s_addr = INADDR_ANY;
-
-  // Bind
-  if (bind(socket_desc, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+  // Create and bind server socket using shared helper
+  socket_desc = create_server_socket(SERVER_IP, SERVER_PORT);
+  if (socket_desc < 0)
   {
-    printf("Couldn't bind to the port\n");
+    fprintf(stderr, "Failed to create server socket\n");
     return -1;
   }
-  printf("Done with binding\n");
 
-  // Listen
-  if (listen(socket_desc, 5) < 0)
-  {
-    printf("Error while listening\n");
-    close(socket_desc);
-    return -1;
-  }
-  printf("\nListening for incoming connections on port %d.....\n", SERVER_PORT);
+  global_socket_desc = socket_desc; // Save for signal handler
+  printf("Server listening on %s:%d\n", SERVER_IP, SERVER_PORT);
+
   // Set socket timeout so accept() doesn't block forever
   struct timeval timeout;
   timeout.tv_sec = 1; // 1 second timeout
@@ -205,6 +182,7 @@ int main(void)
   {
     perror("Failed to set socket timeout");
   }
+
   // Main server loop
   while (is_server_running())
   {
@@ -236,17 +214,17 @@ int main(void)
 
     if (activity == 0)
     {
-      // Timeout - no incoming connection
-      // Loop will check is_server_running() again
+      // Timeout - no incoming connection. Loop will check is_server_running() again
       continue;
     }
+
     // Check if we're still running (might have been stopped by signal)
     if (!is_server_running())
     {
       break;
     }
 
-    // Socket is readable - there's an incoming connection
+    // Socket is readable, there's an incoming connection
     client_size = sizeof(client_addr);
     int client_sock = accept(socket_desc, (struct sockaddr *)&client_addr, &client_size);
 
@@ -295,7 +273,6 @@ int main(void)
     pthread_detach(thread_id);
   }
 
-  // Clean shutdown
   printf("Server shutting down gracefully...\n");
 
   // Close listening socket if not already closed

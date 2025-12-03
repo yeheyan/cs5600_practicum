@@ -19,6 +19,7 @@
 #include "version_manager.h"
 #include "operations.h"
 #include "config.h"
+#include "network.h"
 
 // Server state
 static volatile int server_running = 1;
@@ -43,18 +44,15 @@ int is_server_running(void)
 void handle_write_request(int client_sock)
 {
     char filename[256];
-    int filename_len;
     long file_size;
-    char buffer[BUFFER_SIZE];
 
-    // Receive filename
-    if (recv(client_sock, &filename_len, sizeof(int), 0) <= 0 ||
-        recv(client_sock, filename, filename_len, 0) <= 0)
+    // Receive filename using shared function
+    if (recv_string(client_sock, filename, sizeof(filename)) < 0)
     {
-        perror("Failed to receive filename");
+        fprintf(stderr, "Failed to receive filename\n");
         return;
     }
-    filename[filename_len] = '\0';
+
     printf("Received path from client: %s\n", filename);
 
     // Validate and build path
@@ -68,12 +66,13 @@ void handle_write_request(int client_sock)
     build_storage_path(filename, full_path, sizeof(full_path));
     printf("Saving to: %s\n", full_path);
 
-    // Receive file size
-    if (recv(client_sock, &file_size, sizeof(long), 0) <= 0)
+    // Receive file size using shared function
+    if (recv_all(client_sock, &file_size, sizeof(long)) < 0)
     {
-        perror("Failed to receive file size");
+        fprintf(stderr, "Failed to receive file size\n");
         return;
     }
+
     printf("File size: %ld bytes (%.2f MB)\n", file_size, file_size / (1024.0 * 1024.0));
 
     // Create directories if needed
@@ -92,7 +91,7 @@ void handle_write_request(int client_sock)
         }
     }
 
-    // lock for entire write operation(backup + write)
+    // Lock for entire write operation (backup + write)
     unsigned int hash = hash_string(full_path);
     pthread_mutex_lock(&version_mutexes[hash]);
     printf("[WRITE MUTEX LOCKED] for %s\n", full_path);
@@ -122,50 +121,25 @@ void handle_write_request(int client_sock)
     }
     printf("[FILE LOCKED] %s for writing\n", full_path);
 
-    // Receive file data
-    long total_received = 0;
-    ssize_t bytes_received;
+    // Receive file data using shared function
+    long total_received = recv_file_data(client_sock, file, file_size);
+
     int write_error = 0;
-
-    while (total_received < file_size)
+    if (total_received < 0)
     {
-        bytes_received = recv(client_sock, buffer, BUFFER_SIZE, 0);
-        if (bytes_received <= 0)
-        {
-            if (bytes_received < 0)
-            {
-                perror("recv failed");
-            }
-            break;
-        }
-
-        size_t written = fwrite(buffer, 1, bytes_received, file);
-
-        // CHECK FOR WRITE ERROR (disk full, etc.)
-        if (written != (size_t)bytes_received)
-        {
-            fprintf(stderr, "[ERROR] Write failed - storage may be full\n");
-            perror("fwrite");
-            write_error = 1;
-            break;
-        }
-
-        total_received += bytes_received;
-    }
-
-    // Check for file stream errors
-    if (!write_error && ferror(file))
-    {
-        fprintf(stderr, "[ERROR] File write error occurred\n");
-        perror("File error");
+        fprintf(stderr, "[ERROR] Failed to receive file data\n");
         write_error = 1;
     }
-
-    // Check if we received complete file
-    if (!write_error && total_received != file_size)
+    else if (total_received != file_size)
     {
         fprintf(stderr, "[ERROR] Incomplete file - expected %ld, got %ld bytes\n",
                 file_size, total_received);
+        write_error = 1;
+    }
+    else if (ferror(file))
+    {
+        fprintf(stderr, "[ERROR] File write error occurred\n");
+        perror("File error");
         write_error = 1;
     }
 

@@ -1,7 +1,14 @@
-## Client Operations
+# Quick Start
+Run
+```ruby
+cmod +x rfs_test.sh
+```
+to start local server and client test script.
+See demo video for more.
+# Client Operations
 The server uses a dedicated directory rfs_storage as root path for better security.
 
-### WRITE
+## WRITE
 Write operation writes a local file from a client to the remote server.
 ```ruby
 ./rfs WRITE localfile_path remotefile_path
@@ -33,7 +40,7 @@ B. Remote path not provided
 - Not to: rfs_storage/user/jdoe/proj/example.txt (fullpath)
 - It doesn't make sense to assume the absolute path on the client's side exists on the server side, too. We want to prevents creating irrelevant directory structures on the server.
 
-### GET
+## GET
 Get operation get a file from the remote server to a client
 ```ruby
 ./rfs GET remote_folder/remote_file.html local_folder/local_file.html
@@ -57,7 +64,7 @@ B. local path not provided
 Remote file rfs_storage/project/file.txt will be saved in the current directory(wherever the client runs the program).
 
 
-### GETVERSION
+## GETVERSION
 Get version operation can get a specific history version of a file. Otherwise similar to GET OP. Client can check which version number with LS OP (see below).
 
 ```ruby
@@ -75,7 +82,7 @@ For example, getting the first versioned file.txt in the rfs_storage/project, cl
 3. Program uses client current path to recieve file as no local path has been provided;
 4. Program fetches the newest history version (not the current one, but the historical one!) of file.txt  to current path if that version exists.
 
-### LS
+## LS
 Ls operation display all versions of a file in the remote server.
 
 ```ruby
@@ -83,24 +90,24 @@ Ls operation display all versions of a file in the remote server.
 ```
 The program will display the version number, the full name of the versioned file, file's size and the time it was written.
 
-### RM
+## RM
 Rm operation removes all versions of a file in the remote server.
 
 ```ruby
 ./rfs RM remote_path_file
 ```
 
-### STOP
+## STOP
 STOP operation sends a STOP signal to the remote server to stop the server. Server will wait for all clients activities to finsih then shut down.
 
 ```ruby
 ./rfs STOP
 ```
 
-## Concurrency and Threading
+# Concurrency and Threading
 Overview
 Our server uses a multi-threaded architecture with fine-grained locking to handle concurrent client requests safely and efficiently.
-### Threading Model
+## Threading Model
 Each client connection spawns a new thread using POSIX threads (pthreads):
 
 The main server loop accepts incoming connections
@@ -108,7 +115,7 @@ Each accepted connection is handled by a dedicated thread
 Threads are detached and clean up automatically after completion
 Multiple clients can be served simultaneously without blocking each other
 
-### Synchronization Strategy
+## Synchronization Strategy
 The server implements a multi-level locking strategy to protect shared resources:
 1. File-Level Locks (flock)
 Individual files are protected using flock() to coordinate concurrent access:
@@ -117,7 +124,6 @@ WRITE operations: Acquire exclusive lock (LOCK_EX)
 
 Blocks all other readers and writers
 Ensures file integrity during write operations
-
 
 GET operations: Acquire shared lock (LOCK_SH)
 
@@ -172,7 +178,7 @@ The server_running flag is protected by a mutex:
 Threads can safely check if the server is shutting down
 The STOP command safely signals shutdown across all threads
 
-#### Graceful Shutdown
+### Graceful Shutdown
 The server uses select() with a timeout to check the server_running flag periodically:
 
 When a STOP command is received, the flag is set to 0
@@ -180,14 +186,14 @@ The main loop detects this within 1 second
 Active operations complete before the server exits
 Listening socket is closed properly
 
-#### Concurrency Benefits
+### Concurrency Benefits
 
 Performance: Multiple clients can operate on different files simultaneously without blocking
 Safety: Same-file operations are properly serialized to prevent corruption
 Efficiency: Readers don't block each other (shared locks)
 Scalability: Hash-based mutex array minimizes lock contention
 
-#### Error Handling
+### Error Handling
 File write operations include comprehensive error checking:
 
 Storage full errors are detected via fwrite() failures
