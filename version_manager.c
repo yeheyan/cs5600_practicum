@@ -55,15 +55,6 @@ void backup_file(const char *filename)
     }
 }
 
-void backup_file_safe(const char *filename)
-{
-    unsigned int hash = hash_string(filename);
-
-    pthread_mutex_lock(&version_mutexes[hash]);
-    backup_file(filename);
-    pthread_mutex_unlock(&version_mutexes[hash]);
-}
-
 time_t extract_version_timestamp(const char *version_filename)
 {
     const char *v_pos = strrchr(version_filename, 'v');

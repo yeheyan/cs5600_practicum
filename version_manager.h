@@ -21,13 +21,6 @@ extern pthread_mutex_t version_mutexes[HASH_SIZE];
 void backup_file(const char *filename);
 
 /**
- * @brief Thread-safe version of backup_file
- *
- * @param filename  Path to the file to back up
- */
-void backup_file_safe(const char *filename);
-
-/**
  * @brief Extract timestamp from versioned filename
  *
  * @param version_filename  Versioned filename

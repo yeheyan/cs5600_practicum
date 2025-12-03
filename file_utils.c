@@ -1,3 +1,8 @@
+/*
+ * File utility functions for remote file system, Yehen Yan, CS5600 Practicum II
+ * Last modified: Dec 2025
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -7,15 +12,14 @@
 #include <sys/socket.h>
 #include "file_utils.h"
 #include "config.h"
+#include "network.h"
 
-// Check if file exists
 int file_exists(const char *filename)
 {
     struct stat buffer;
     return (stat(filename, &buffer) == 0);
 }
 
-// Delete a single file
 int delete_single_file(const char *filepath)
 {
     if (file_exists(filepath))
@@ -34,7 +38,6 @@ int delete_single_file(const char *filepath)
     return 0; // Didn't exist
 }
 
-// Delete all versions of a file
 int delete_file_versions(const char *full_path, int *deleted, int *failed)
 {
     char pattern[512];
@@ -58,7 +61,7 @@ int delete_file_versions(const char *full_path, int *deleted, int *failed)
     {
         return 0;
     }
-
+    // Iterate and delete matching versions in directory
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL)
     {
@@ -85,7 +88,6 @@ int delete_file_versions(const char *full_path, int *deleted, int *failed)
     return 1;
 }
 
-// Get file modification time
 time_t get_file_mtime(const char *filename)
 {
     struct stat st;
@@ -96,25 +98,21 @@ time_t get_file_mtime(const char *filename)
     return 0;
 }
 
-// Format timestamp as readable string
 void format_timestamp(time_t timestamp, char *buffer, size_t size)
 {
     struct tm *tm_info = localtime(&timestamp);
     strftime(buffer, size, "%Y-%m-%d %H:%M:%S", tm_info);
 }
 
-// Send a file over socket with locking
 long send_file_with_lock(int client_sock, const char *filepath)
 {
-    char buffer[BUFFER_SIZE];
-
     // Open file for reading
     FILE *file = fopen(filepath, "rb");
     if (!file)
     {
         perror("Failed to open file");
         long error = -1;
-        send(client_sock, &error, sizeof(long), 0);
+        send_all(client_sock, &error, sizeof(long)); // Use send_all
         return -1;
     }
 
@@ -125,7 +123,7 @@ long send_file_with_lock(int client_sock, const char *filepath)
         perror("Failed to lock file");
         fclose(file);
         long error = -1;
-        send(client_sock, &error, sizeof(long), 0);
+        send_all(client_sock, &error, sizeof(long)); // Use send_all
         return -1;
     }
     printf("[LOCKED] %s for reading\n", filepath);
@@ -136,16 +134,10 @@ long send_file_with_lock(int client_sock, const char *filepath)
     fseek(file, 0, SEEK_SET);
 
     // Send file size
-    send(client_sock, &file_size, sizeof(long), 0);
+    send_all(client_sock, &file_size, sizeof(long)); // Use send_all
 
-    // Send file data
-    size_t bytes_read;
-    long total_sent = 0;
-    while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) > 0)
-    {
-        send(client_sock, buffer, bytes_read, 0);
-        total_sent += bytes_read;
-    }
+    // Send file data using shared function
+    long total_sent = send_file_data(client_sock, file, file_size);
 
     // Unlock and close
     flock(fd, LOCK_UN);
