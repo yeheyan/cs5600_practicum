@@ -3,6 +3,8 @@
  * Main server implementation
  * Last modified: Dec 2025
  */
+#define _POSIX_C_SOURCE 200809L // linux standard
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

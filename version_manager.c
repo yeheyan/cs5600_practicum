@@ -3,7 +3,6 @@
  * File version management implementation
  * Last modified: Dec 2025
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,11 +57,16 @@ void backup_file(const char *filename)
 time_t extract_version_timestamp(const char *version_filename)
 {
     const char *v_pos = strrchr(version_filename, 'v');
-    if (v_pos && *(v_pos - 1) == '.')
+    if (!v_pos || v_pos == version_filename || *(v_pos - 1) != '.')
     {
-        return (time_t)atol(v_pos + 1);
+        return 0;
     }
-    return 0;
+
+    char seconds_str[11];
+    strncpy(seconds_str, v_pos + 1, 10);
+    seconds_str[10] = '\0';
+
+    return (time_t)atol(seconds_str);
 }
 
 int resolve_version_path(const char *full_path, int version_number, char *version_path, size_t size)
