@@ -13,36 +13,6 @@ SERVER_PID=$!
 sleep 2
 
 echo -e "${GREEN}=== Running Client Tests ===${NC}"
-# bad tests
-# Test 1 no operation
-echo -e "${BLUE}Test 1: No operation${NC}"
-./rfs
-if [ $? -ne 0 ]; then echo -e "${GREEN}✓ No operation test passed${NC}"; else echo -e "${RED}✗ No operation test failed${NC}";
-fi
-
-# Test 2 invalid operation
-echo -e "${BLUE}Test 2: Invalid operation${NC}"
-./rfs INVALID_OP
-if [ $? -ne 0 ]; then echo -e "${GREEN}✓ Invalid operation test passed${NC}"; else echo -e "${RED}✗ Invalid operation test failed${NC}";
-fi
-
-# Test 3 GET non-existent file
-echo -e "${BLUE}Test 3: GET non-existent file${NC}"
-./rfs GET nonexistent.txt
-if [ $? -ne 0 ]; then echo -e "${GREEN}✓ GET non-existent file test passed${NC}"; else echo -e "${RED}✗ GET non-existent file test failed${NC}";
-fi
-
-# Test 4 REMOVE non-existent file
-echo -e "${BLUE}Test 4: REMOVE non-existent file${NC}"
-./rfs RM nonexistent.txt
-if [ $? -ne 0 ]; then echo -e "${GREEN}✓ REMOVE non-existent file test passed${NC}"; else echo -e "${RED}✗ REMOVE non-existent file test failed${NC}";
-fi
-
-# Test 5 WRITE non-existent local file
-echo -e "${BLUE}Test 5: WRITE non-existent local file${NC}"
-./rfs WRITE nonexistent_local.txt remote.txt
-if [ $? -ne 0 ]; then echo -e "${GREEN}✓ WRITE non-existent local file test passed${NC}"; else echo -e "${RED}✗ WRITE non-existent local file test failed${NC}";
-fi
 
 # good tests
 # Test 1

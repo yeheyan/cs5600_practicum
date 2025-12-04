@@ -4,7 +4,9 @@ Run
 cmod +x rfs_test.sh
 ```
 to start local server and client test script.
-See demo video for more.
+
+See demo video for server/client testing on different machines.
+
 # Client Operations
 The server uses a dedicated directory rfs_storage as root path for better security.
 
@@ -104,6 +106,13 @@ STOP operation sends a STOP signal to the remote server to stop the server. Serv
 ./rfs STOP
 ```
 
+# Server
+Run
+```ruby
+./server
+```
+to start server. A rfs_storage root directory for recieving files will be automatically created if not already there.
+
 # Concurrency and Threading
 Overview
 Our server uses a multi-threaded architecture with fine-grained locking to handle concurrent client requests safely and efficiently.
@@ -200,7 +209,7 @@ Storage full errors are detected via fwrite() failures
 Incomplete writes are detected and partial files are removed
 All error paths properly release locks to prevent deadlocks
 
-# Network Connection Testing
+# RFS Testing
 
 Server IP and port can be configured in `config.h`.
 
@@ -299,7 +308,7 @@ vi config.h
 ```
 Set:
  ````
- #define SERVER_IP "10.99.248.243"  // Use your server's IP
+#define SERVER_IP "10.99.248.243"  // Use your server's IP
 #define SERVER_PORT 8080
 ````
 Compile and test connection
@@ -339,3 +348,7 @@ Both should succeed if the server is running and network communication is workin
 - Real Network Communication: Client and server run on different physical machines, communicating via TCP over Discovery's internal network
 - No Firewall Issues: Discovery nodes can communicate freely within the cluster
 - True Distributed Testing: Demonstrates actual network latency, packet transmission, and multi-threaded server handling of remote connections
+
+# Future Work
+
+Lots of edge cases need to be tested such as hostile long file name that might cause overflow or other hostile attempts from users.
